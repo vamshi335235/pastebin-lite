@@ -4,7 +4,7 @@
 A fast, secure, and ephemeral pastebin application built with **Next.js 15**, **Tailwind CSS**, and **Redis**.
 Create self-destructing text pastes with optional expiration times and view limits.
 
-**[View Live Demo](https://pastebin-lite-delta.vercel.app/)** *(Replace with your actual URL)*
+**[View Live Demo](https://pastebin-lite-delta.vercel.app/)**
 
 ---
 
