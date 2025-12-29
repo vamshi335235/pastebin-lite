@@ -1,66 +1,109 @@
 
-# Pastebin Lite
+# 📝 Pastebin Lite
 
-A fast, secure, and ephemeral pastebin application built with Next.js and Tailwind CSS.
-Supports optional Time-to-Live (TTL) and View Count constraints.
+A fast, secure, and ephemeral pastebin application built with **Next.js 15**, **Tailwind CSS**, and **Redis**.
+Create self-destructing text pastes with optional expiration times and view limits.
 
-## Features
+**[View Live Demo](https://pastebin-lite-delta.vercel.app/)** *(Replace with your actual URL)*
 
-- **Create Paste**: Share text snippets easily.
-- **Constraints**:
-  - **TTL**: Pastes automatically expire after a set time.
-  - **View Limit**: Pastes self-destruct after N views.
-- **Secure**: Content is rendered safely.
-- **API First**: Full REST API support.
+---
 
-## Getting Started
+## ✨ Features
+
+*   **Create Pastes**: Simple, clean interface to share text.
+*   **Time-to-Live (TTL)**: Set pastes to expire automatically after a specific duration (seconds).
+*   **View Limits**: Set pastes to "self-destruct" after a specific number of views.
+*   **Secure & Atomic**: Uses Redis atomic operations (`HINCRBY`) to safely handle concurrent view counting.
+*   **Premium UI**: Dark mode design with glassmorphism effects and responsiveness.
+*   **API Support**: Full REST API for creating and retrieving pastes programmatically.
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- npm
+*   Node.js 18+
+*   npm
 
-### Installation
+### Local Installation
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/vamshi335235/pastebin-lite.git
+    cd pastebin-lite
+    ```
 
-2. Run local development server:
-   ```bash
-   npm run dev
-   ```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-3. Open [http://localhost:3000](http://localhost:3000)
+3.  **Configure Environment (Optional):**
+    The app runs with **In-Memory Storage** by default (data lost on restart).
+    To use **Redis** locally, create a `.env.local` file:
+    ```bash
+    cp .env.example .env.local
+    ```
+    Then add your Upstash/Redis credentials:
+    ```env
+    UPSTASH_REDIS_REST_URL="your-url-here"
+    UPSTASH_REDIS_REST_TOKEN="your-token-here"
+    ```
 
-### Persistence
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The application is designed to run in a serverless environment (Vercel).
-It supports **Vercel KV (Redis)** for persistence.
+## 🛠️ Architecture & Decisions
 
-- **Production/Serverless**: Set `KV_REST_API_URL` and `KV_REST_API_TOKEN` environment variables.
-- **Local Development**: If Redis environment variables are missing, the app falls back to **In-Memory Storage**. 
-  > **Note**: In-memory data is lost when the server restarts. To use Redis locally, provide the environment variables in `.env.local`.
+*   **Framework**: Next.js 15 (App Router) was chosen for its robust API route handling and server-side rendering capabilities.
+*   **Styling**: Tailwind CSS v4 provides a highly maintainable, utility-first design system without runtime overhead.
+*   **Persistence (Redis)**:
+    *   **Upstash Redis** (`@upstash/redis`) is used for serverless-friendly HTTP-based Redis connections.
+    *   **Data Model**: Pastes are stored as Redis Hashes (`paste:<id>`).
+    *   **Concurrency**: View counts are incremented atomically using `HINCRBY` to ensure `max_views` constraints are strictly enforced even under load.
+    *   **Expiry**: While Redis TTL is set for cleanup, application logic also validates `expires_at` timestamps to support deterministic testing.
+*   **Testing**: The app supports a `TEST_MODE=1` environment variable to allow time-travel testing via the `x-test-now-ms` header.
 
-### Design Decisions
+## 📡 API Documentation
 
-- **Framework**: Next.js 15 (App Router) for server-side rendering and API routes.
-- **Styling**: Tailwind CSS for modern, responsive, and maintainable styles.
-- **Storage Strategy**:
-  - Redis Hash is used to store paste metadata.
-  - `HINCRBY` is used for atomic view counting to prevent race conditions.
-  - TTL is handled via logic (comparing `expires_at`) to support deterministic testing (`x-test-now-ms`), with Redis native TTL as a garbage collection backup.
-- **Deterministic Testing**: Respects `x-test-now-ms` restricted header when `TEST_MODE=1` is enabled.
+### 1. Create a Paste
+**Endpoint**: `POST /api/pastes`
 
-## API Documentation
+**Body**:
+```json
+{
+  "content": "Hello World",
+  "ttl_seconds": 60,    // Optional: Expires in 60s
+  "max_views": 5        // Optional: Expires after 5 views
+}
+```
 
-### Create Paste
-`POST /api/pastes`
-Body: `{ "content": "string", "ttl_seconds": number?, "max_views": number? }`
+**Response**:
+```json
+{
+  "id": "abc12345",
+  "url": "https://.../p/abc12345"
+}
+```
 
-### Get Paste (API)
-`GET /api/pastes/:id`
+### 2. Get Paste Metadata
+**Endpoint**: `GET /api/pastes/:id`
 
-### Health Check
-`GET /api/healthz`
+**Response**:
+```json
+{
+  "content": "Hello World",
+  "remaining_views": 4,
+  "expires_at": "2025-01-01T12:00:00Z"
+}
+```
+
+### 3. Health Check
+**Endpoint**: `GET /api/healthz`
+**Response**: `{ "ok": true }`
+
+---
+
+Built for the **Pastebin-Lite Take-Home Assignment**.

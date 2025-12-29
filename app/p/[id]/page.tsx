@@ -5,6 +5,9 @@ import { headers } from 'next/headers';
 import Link from 'next/link';
 import { Clock, Eye, Calendar, ArrowLeft } from 'lucide-react';
 
+// Force dynamic rendering to ensure view counts and headers are processed correctly on every request.
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
     params: Promise<{
         id: string;
@@ -15,9 +18,11 @@ export default async function PastePage({ params }: PageProps) {
     const { id } = await params;
     const headersList = await headers();
 
+    // Fetch paste
     const paste = await getAndVisitPaste(id, headersList);
 
     if (!paste) {
+        // This triggers the not-found.tsx page
         notFound();
     }
 

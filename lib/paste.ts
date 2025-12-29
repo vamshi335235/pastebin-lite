@@ -12,9 +12,12 @@ export async function getAndVisitPaste(id: string, headers: HeadersLike) {
 
     // Check TTL
     const now = getCurrentTime(headers);
-    if (paste.expires_at && now > paste.expires_at) {
-        console.log(`[PasteLogic] Paste ${id} expired. Now: ${now}, ExpiresAt: ${paste.expires_at}`);
-        return null;
+    if (paste.expires_at) {
+        // Add small grace period of 2 seconds for clock skew
+        if (now > (paste.expires_at + 2000)) {
+            console.log(`[PasteLogic] Paste ${id} expired. Now: ${now}, ExpiresAt: ${paste.expires_at}`);
+            return null;
+        }
     }
 
     // Handle View Counting
@@ -28,5 +31,6 @@ export async function getAndVisitPaste(id: string, headers: HeadersLike) {
         }
     }
 
+    console.log(`[PasteLogic] SUCCESS returning paste ${id}`);
     return { ...paste, views: newViews };
 }
